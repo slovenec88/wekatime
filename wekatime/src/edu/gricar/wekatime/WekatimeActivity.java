@@ -3,43 +3,43 @@ package edu.gricar.wekatime;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.Random;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-
 import weka.classifiers.Evaluation;
+import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.lazy.IBk;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.classifiers.trees.J48;
-import weka.clusterers.ClusterEvaluation;
 import weka.core.Instances;
-import weka.filters.unsupervised.attribute.Remove;
 
 public class WekatimeActivity extends Activity {
 	Instances data;
+	BufferedReader buf;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		try {
-			beri();
+			podatki();
+			j48();
+			ibk();
+			naivebayes();	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	void beri() throws Exception{
-
-		BufferedReader buf = new BufferedReader(new FileReader("/sdcard/car.arff"));
-
+	
+	void podatki() throws Exception{
+		buf = new BufferedReader(new FileReader("/sdcard/car.arff"));
 		data = new Instances(buf);
 		buf.close();
 		data.setClassIndex(data.numAttributes() - 1);
-		//System.out.println(data.toString());
-
-		Remove rm = new Remove();
-		rm.setAttributeIndices("1");  // remove 1st attribute
+		
+	}
+	void j48() throws Exception{
+		System.out.println("j48:");
 
 		String[] optionj48 = new String[4];
 		optionj48[0] = "-C";
@@ -51,11 +51,12 @@ public class WekatimeActivity extends Activity {
 		j48.setUnpruned(true); 
 		j48.setOptions(optionj48);
 		FilteredClassifier fc = new FilteredClassifier();
-		fc.setFilter(rm);
+		//fc.setFilter(rm);
 		fc.setClassifier(j48);
 		fc.buildClassifier(data);
-		Log.i("WekaLog", data.toSummaryString());
-		Log.i("WekaLog", j48.toSummaryString());
+		
+		System.out.println(data.toSummaryString());
+		System.out.println(j48.toSummaryString());
 		
 		 String[] options = new String[2];
 		 options[0] = "-t";
@@ -64,23 +65,58 @@ public class WekatimeActivity extends Activity {
 		 
 		 Evaluation eval = new Evaluation(data);
 		 eval.crossValidateModel(j48, data, 10, new Random(1));
-		 
-		 //System.out.println(Evaluation.evaluateModel(new J48(), options));
+
 		 System.out.println(eval.toSummaryString());
-
-		 
-		 
-		/*for (int i = 0; i < data.numInstances(); i++) {
-			double pred = 0;
-
-			pred = fc.classifyInstance(data.instance(i));
-
-			System.out.print("ID: " + data.instance(i).value(0));
-			System.out.print(", actual: " + data.classAttribute().value((int) data.instance(i).classValue()));
-			System.out.println(", predicted: " + data.classAttribute().value((int) pred));
-
-			System.out.println("do tu sem pridem");
-		}*/
 	}
+	
+	void ibk() throws Exception{
+		System.out.println("IBK:");
+		
+		String[] optionibk = new String[6];
+		optionibk[0] = "-K";
+		optionibk[1] = "1";
+		optionibk[2] = "-W";
+		optionibk[3] = "0";
+		optionibk[4] = "-A";
+		optionibk[5] = "weka.core.neighboursearch.LinearNNSearch -A \"weka.core.EuclideanDistance -R first-last\"";
+		
+		IBk ibk = new IBk();
+		ibk.setOptions(optionibk);
+
+		ibk.buildClassifier(data);
+
+		System.out.println(data.toSummaryString());
+		
+		 String[] options = new String[2];
+		 options[0] = "-t";
+		 options[1] = "/sdcard/car.arff";
+		 
+		 
+		 Evaluation eval = new Evaluation(data);
+		 eval.crossValidateModel(ibk, data, 10, new Random(1));
+
+		 System.out.println(eval.toSummaryString());
+	}
+	
+	void naivebayes () throws Exception{
+		System.out.println("NAIVE BAYES:");
+		
+		NaiveBayes nb = new NaiveBayes();
+		nb.buildClassifier(data);
+		System.out.println(data.toSummaryString());
+
+		
+		 String[] options = new String[2];
+		 options[0] = "-t";
+		 options[1] = "/sdcard/car.arff";
+		 
+		 
+		 Evaluation eval = new Evaluation(data);
+		 eval.crossValidateModel(nb, data, 10, new Random(1));
+
+		 System.out.println(eval.toSummaryString());
+	}
+	
+	
 
 }
