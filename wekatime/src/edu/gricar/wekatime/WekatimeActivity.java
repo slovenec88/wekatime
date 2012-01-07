@@ -3,13 +3,15 @@ package edu.gricar.wekatime;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Random;
-
-import android.app.Application;
 import android.app.TabActivity;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.view.Window;
+import android.widget.Chronometer;
 import android.widget.TabHost;
 import android.widget.TextView;
 import weka.classifiers.Evaluation;
@@ -26,6 +28,7 @@ public class WekatimeActivity extends TabActivity {
 	BufferedReader buf;
 	private TabHost tabHost;
 	TextView tv1, tv2, tv3;
+	Chronometer chrono;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,9 +64,15 @@ public class WekatimeActivity extends TabActivity {
 		tv1 = (TextView) findViewById(R.id.textView1);
 		tv2 = (TextView) findViewById(R.id.textView2);
 		tv3 = (TextView) findViewById(R.id.textView3);
-
-
+		
+		tv1.setMovementMethod(new ScrollingMovementMethod());
+		tv2.setMovementMethod(new ScrollingMovementMethod());
+		tv3.setMovementMethod(new ScrollingMovementMethod());
+		
+		chrono = (Chronometer) findViewById(R.id.chronometer1);
+		
 		try {
+			chrono.start();
 			OnStart();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -85,7 +94,7 @@ public class WekatimeActivity extends TabActivity {
 
 	}
 	String j48() throws Exception{
-		System.out.println("j48:");
+		//System.out.println("j48:");
 
 		String[] optionj48 = new String[4];
 		optionj48[0] = "-C";
@@ -94,27 +103,30 @@ public class WekatimeActivity extends TabActivity {
 		optionj48[3] = "2";
 
 		J48 j48 = new J48();
-		j48.setUnpruned(true); 
+		j48.setUnpruned(true);
+		//j48.setUnpruned(false);
 		j48.setOptions(optionj48);
 		FilteredClassifier fc = new FilteredClassifier();
 		//fc.setFilter(rm);
 		fc.setClassifier(j48);
 		fc.buildClassifier(data);
 
-		System.out.println(data.toSummaryString());
-		System.out.println(j48.toSummaryString());
+		//System.out.println(data.toSummaryString());
+		//System.out.println(j48.toSummaryString());
 
 		String[] options = new String[2];
 		options[0] = "-t";
 		options[1] = "/sdcard/car.arff";
-
+		
+		String miki = j48.toSummaryString();
+		String piki = data.toSummaryString();
 
 		Evaluation eval = new Evaluation(data);
 		eval.crossValidateModel(j48, data, 10, new Random(1));
 
-		System.out.println(eval.toSummaryString());
+		//System.out.println(eval.toSummaryString());
 
-		return eval.toSummaryString();
+		return eval.toSummaryString() + "\n" + piki + "\n" + miki + "\n" + Evaluation.evaluateModel(new J48(), options);
 	}
 
 	String ibk() throws Exception{
@@ -133,7 +145,7 @@ public class WekatimeActivity extends TabActivity {
 
 		ibk.buildClassifier(data);
 
-		System.out.println(data.toSummaryString());
+		//System.out.println(data.toSummaryString());
 
 		String[] options = new String[2];
 		options[0] = "-t";
@@ -143,9 +155,9 @@ public class WekatimeActivity extends TabActivity {
 		Evaluation eval = new Evaluation(data);
 		eval.crossValidateModel(ibk, data, 10, new Random(1));
 
-		System.out.println(eval.toSummaryString());
+		//System.out.println(eval.toSummaryString());
 
-		return eval.toSummaryString();
+		return eval.toSummaryString() + "\n" + data.toSummaryString();
 	}
 
 	String naivebayes () throws Exception{
@@ -153,7 +165,7 @@ public class WekatimeActivity extends TabActivity {
 
 		NaiveBayes nb = new NaiveBayes();
 		nb.buildClassifier(data);
-		System.out.println(data.toSummaryString());
+		//System.out.println(data.toSummaryString());
 
 
 		String[] options = new String[2];
@@ -164,9 +176,9 @@ public class WekatimeActivity extends TabActivity {
 		Evaluation eval = new Evaluation(data);
 		eval.crossValidateModel(nb, data, 10, new Random(1));
 
-		System.out.println(eval.toSummaryString());
+		//System.out.println(eval.toSummaryString());
 
-		return eval.toSummaryString();
+		return eval.toSummaryString() + "\n" + data.toSummaryString();
 	}
 
 	public class BackgroundAsyncTask extends AsyncTask<Void, Integer, String> {
@@ -193,6 +205,11 @@ public class WekatimeActivity extends TabActivity {
 			tv1.setText(app.shrani[0]);
 			tv2.setText(app.shrani[1]);
 			tv3.setText(app.shrani[2]);
+			chrono.stop();
+			
+			Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+			long mili = 1000;
+			v.vibrate(mili);
 		}
 	}
 
