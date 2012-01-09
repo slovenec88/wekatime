@@ -123,6 +123,15 @@ public class WekatimeActivity extends TabActivity {
 				e.printStackTrace();
 			}
 			return true;
+		case R.id.boljsi:
+			try {
+				kdojeboljsi();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				Toast.makeText(this, "Ni podatkov!", Toast.LENGTH_SHORT).show();
+			}
+			return true;
 
 		default:// Generic catch all for all the other menu resources
 			if (!item.hasSubMenu()) {
@@ -148,7 +157,7 @@ public class WekatimeActivity extends TabActivity {
 		buf.close();
 		data.setClassIndex(data.numAttributes() - 1);
 	}
-	
+
 	String j48() throws Exception{
 		String[] optionj48 = new String[4];
 		optionj48[0] = "-C";
@@ -312,5 +321,32 @@ public class WekatimeActivity extends TabActivity {
 		catch(Exception e){
 			e.printStackTrace();
 		}
+	}
+
+	float[] howMany = new float[3];
+	float[] percent = new float[3];
+	float[] whoIsBest = new float[]{0,0,0};
+	int best = 0;
+	String[] klasifi = new String[]{"J48", "IBk", "NaiveBayes"};
+
+	void kdojeboljsi(){
+		for(int i=0; i<3; i++){
+			String[] tmp = app.shrani[i].split("\n");
+			String[] tmp2 = tmp[1].substring(37, tmp[1].length()-2).split(" ");
+			for(int j=0; j<tmp2.length; j++)
+				if(tmp2[j] != "")
+					System.out.println(j + "_" + tmp2[j]);
+			howMany[i] = Float.parseFloat(tmp2[2]);
+			percent[i] = Float.parseFloat(tmp2[tmp2.length-1]);
+		}
+		whoIsBest[0] = percent[0];
+		for(int i=1; i<3; i++){
+			if(whoIsBest[i-1]<percent[i]){
+				whoIsBest[i] = percent[i];
+				best = i;
+			}
+		}
+		Toast.makeText(this, "Najboljši je " + klasifi[best] + "!", Toast.LENGTH_SHORT).show();
+		tabHost.setCurrentTab(best);
 	}
 }
